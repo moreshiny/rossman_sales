@@ -60,7 +60,7 @@ def train_models(X_train: pd.DataFrame, y_train: pd.DataFrame) -> Tuple[Pipeline
             n_estimators=250,
             max_depth=3,
             random_state=42,
-            nthread=-1,
+            n_jobs=-1,
         )
         ),
     ])
