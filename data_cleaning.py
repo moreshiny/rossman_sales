@@ -46,7 +46,7 @@ def date_treatment(df):
     df_copy['day_sin'] = df_copy['day']    .apply(lambda x: np.sin(2 * np.pi * (x-1) / 30.5))
     df_copy['day_cos'] = df_copy['day']    .apply(lambda x: np.cos(2 * np.pi * (x-1) / 30.5))
     
-    df_copy = df_copy.drop(columns = ['DayOfWeek', 'month', 'weekday','day', 'Date'])
+    df_copy = df_copy.drop(columns = ['DayOfWeek', 'month', 'weekday','day'])
     
     return df_copy
 
