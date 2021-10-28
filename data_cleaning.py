@@ -31,6 +31,7 @@ def date_treatment(df):
     import datetime as dt
     df_copy = df.copy()
     df_copy['Date'] = pd.to_datetime(df_copy['Date'])
+    df_copy['Date'] = df_copy['Date'].dt.date
     df_copy['day'] = df_copy['Date'].dt.day
     df_copy['month'] = df_copy['Date'].dt.month
     df_copy['year'] = df_copy['Date'].dt.year
