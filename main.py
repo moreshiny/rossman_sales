@@ -11,6 +11,7 @@ from models import remove_zero_sales
 from models import split_validation
 from models import train_models
 from models import evaluate_models
+from models import rmspe
 
 TESTING = False
 
@@ -71,6 +72,11 @@ if TESTING:
     print('WARNING - test run, using just 10k data points!')
 training_metrics = evaluate_models(models, X_train, y_train)
 
+print(
+    'Mean as Baseline (RMSPE)',
+    rmspe(np.full_like(y_train, np.mean(y_train)), y_train.to_numpy())
+)
+
 for metric in training_metrics:
     print('')
     for key, values in metric.items():
@@ -81,6 +87,12 @@ print('Validation performance:')
 if TESTING:
     print('WARNING - test run, using just 10k data points!')
 validation_metrics = evaluate_models(models, X_val, y_val)
+
+print(
+    'Mean as Baseline (RMSPE)',
+    rmspe(np.full_like(y_val, np.mean(y_train)), y_val.to_numpy())
+)
+
 for metric in validation_metrics:
     print('')
     for key, values in metric.items():

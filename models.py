@@ -53,7 +53,13 @@ def train_models(X_train: pd.DataFrame, y_train: pd.DataFrame) -> Tuple[Pipeline
 
     pipe_rf = Pipeline([
         ('scaler', StandardScaler()),
-        ('model', RandomForestRegressor()),
+        ('model', RandomForestRegressor(
+            n_estimators=50,
+            max_depth=50,
+            random_state=42,
+            n_jobs=-1,
+        )
+        ),
     ])
 
     print('Running model', type(pipe_rf['model']))
@@ -61,7 +67,13 @@ def train_models(X_train: pd.DataFrame, y_train: pd.DataFrame) -> Tuple[Pipeline
 
     pipe_xg = Pipeline([
         ('scaler', StandardScaler()),
-        ('model', XGBRegressor()),
+        ('model', XGBRegressor(
+            n_estimators=250,
+            max_depth=3,
+            random_state=42,
+            nthread=-1,
+        )
+        ),
     ])
 
     print('Running model', type(pipe_xg['model']))
