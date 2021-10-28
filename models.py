@@ -4,6 +4,9 @@ import datetime as dt
 from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor
 
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
 from typing import List, Dict, Tuple
 
 MODELS = [RandomForestRegressor, XGBRegressor]
@@ -45,29 +48,46 @@ def split_validation(df: pd.DataFrame, year: int, month: int, day: int) -> Tuple
     return (X_train, y_train, X_val, y_val)
 
 
-def train_models(X_train: pd.DataFrame, y_train: pd.DataFrame) -> List:
+def train_models(X_train: pd.DataFrame, y_train: pd.DataFrame) -> Tuple[Pipeline]:
     print('Start modeling...')
-    models = []
-    for model_type in MODELS:
-        model = model_type()
-        print('Running model', type(model))
-        model.fit(X_train, y_train)
-        models.append(model)
-        print('Done', type(model))
-    print('Modeling done')
-    return models
+
+    pipe_rf = Pipeline([
+        ('scaler', StandardScaler()),
+        ('model', RandomForestRegressor()),
+    ])
+
+    print('Running model', type(pipe_rf['model']))
+    pipe_rf.fit(X_train, y_train)
+
+    pipe_xg = Pipeline([
+        ('scaler', StandardScaler()),
+        ('model', XGBRegressor()),
+    ])
+
+    print('Running model', type(pipe_xg['model']))
+    pipe_xg.fit(X_train, y_train)
+
+    return (pipe_rf, pipe_xg)
 
 
-def evaluate_models(models: list, X_val: pd.DataFrame, y_val: pd.DataFrame) -> List[Dict]:
+def evaluate_models(models: Tuple[object], X_val: pd.DataFrame, y_val: pd.DataFrame) -> List[Dict]:
     metrics = []
     for model in models:
         metric = {}
         y_hat = model.predict(X_val)
-        metric['model'] = type(model)
+        metric['model'] = type(model['model'])
         # TODO: is the feature order really correct?
-        metric['feat_importance'] = sorted(list(
-            zip(list(X_val.columns), list(model.feature_importances_.round(2)))), key=lambda x: x[1], reverse=True)
+        metric['feat_importance'] = sorted(
+            list(
+                zip(
+                    list(X_val.columns),
+                    list(model['model'].feature_importances_.round(2))
+                )
+            ),
+            key=lambda x: x[1],
+            reverse=True
+        )
         metric['rmspe'] = round(rmspe(y_hat, y_val.to_numpy()), 2)
-        metrics.append(metric)
+        metrics.append(metric.copy())
 
     return metrics

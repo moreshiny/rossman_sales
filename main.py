@@ -1,12 +1,16 @@
 import pandas as pd
 import numpy as np
+
 from data_cleaning import merge_data
 from data_cleaning import ohe
 from data_cleaning import date_treatment
 from data_cleaning import filling
 
-from models import convert_date, remove_zero_sales
-from models import split_validation, train_models, evaluate_models
+from models import convert_date
+from models import remove_zero_sales
+from models import split_validation
+from models import train_models
+from models import evaluate_models
 
 TESTING = False
 
@@ -66,11 +70,18 @@ print('Training performance:')
 if TESTING:
     print('WARNING - test run, using just 10k data points!')
 training_metrics = evaluate_models(models, X_train, y_train)
-print(training_metrics)
+
+for metric in training_metrics:
+    print('')
+    for key, values in metric.items():
+        print(key, values)
 
 print('')
 print('Validation performance:')
 if TESTING:
     print('WARNING - test run, using just 10k data points!')
 validation_metrics = evaluate_models(models, X_val, y_val)
-print(validation_metrics)
+for metric in validation_metrics:
+    print('')
+    for key, values in metric.items():
+        print(key, values)
