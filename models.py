@@ -21,17 +21,6 @@ def rmspe(preds: np.array, actuals: np.array) -> float:
     return 100 * np.linalg.norm((actuals - preds) / actuals) / np.sqrt(preds.shape[0])
 
 
-def remove_zero_sales(df: pd.DataFrame) -> pd.DataFrame:
-    """ Remove all training and test rows with zero sales """
-    msk_zero_sales = df.loc[:, 'Sales'] == 0
-    return df.loc[~msk_zero_sales, :]
-
-
-def convert_date(df: pd.DataFrame) -> pd.DataFrame:
-    """ Convert datetime to date, remove once cleaning changed """
-    df.loc[:, 'Date'] = df.loc[:, 'Date'].apply(lambda x: x.date())
-    return df
-
 
 def split_validation(df: pd.DataFrame, year: int, month: int, day: int) -> Tuple[pd.DataFrame]:
     val_from = dt.date(year, month, day)
