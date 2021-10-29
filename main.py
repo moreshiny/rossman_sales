@@ -1,19 +1,49 @@
 import pandas as pd
-import numpy as np
 
 from models import split_validation
 from models import define_pipelines
-from models import features_drop1
 from models import single_run
+from models import features_drop1
 from models import single_run2
 from models import grid_search
 
 from data_cleaning import DataCleaning
 
-df_train = pd.read_csv('data/train.csv')
-df_store = pd.read_csv('data/store.csv')
-df_holdout = pd.read_csv('data/holdout.csv')
+TRAINING_DATA = 'data/train.csv'
+HOLDOUT_DATA = 'data/holdout.csv'
+STORE_DATA = 'data/store.csv'
+TEST_DATA = ''
 
+RANDOM_SEED = 42
+CORES = -1
+
+try:
+    df_test = pd.read_csv(TEST_DATA)
+except FileNotFoundError:
+    print('Test data file not found, using holdout as validation set')
+    df_test = pd.read_csv(HOLDOUT_DATA)
+    df_train = pd.read_csv(TRAINING_DATA)
+else:
+    print('Test data loaded, using full training data for model training')
+    df_train = pd.concat([
+        pd.read_csv(TRAINING_DATA),
+        pd.read_csv(HOLDOUT_DATA)
+    ])
+finally:
+    df_store = pd.read_csv(STORE_DATA)
+
+# TODO add asserts to check assumptions on test data
+
+X_train = df_train.drop(columns='Sales')
+y_train = df_train.loc[:, 'Sales']
+X_val = df_test.drop(columns='Sales')
+y_val = df_test.loc[:, 'Sales']
+
+# Feature cleaning and transformation defined below - see data_cleaning.py
+# One hot encoded features are dropped
+# Target is returned as y
+# TODO 'Store' is mean encoded (hardcoded)
+# Date is split, converted, and sin/cos transformed where applicable
 cleaning_settings = dict(
     hot_encoded_columns=[
         'Open',
@@ -22,7 +52,6 @@ cleaning_settings = dict(
         'SchoolHoliday',
         'StoreType',
     ],
-
     dropped_columns=[
         'Store',
         'CompetitionOpenSinceMonth',
@@ -32,28 +61,16 @@ cleaning_settings = dict(
         'PromoInterval',
         'Date',
     ],
-
     filled_in_median=[
         'CompetitionDistance',
     ],
-
     filled_in_mode=[
         'Promo',
     ],
-
     target=[
         'Sales',
     ],
 )
-
-X_train = df_train.drop(columns='Sales')
-y_train = df_train.loc[:, 'Sales']
-
-X_val = df_holdout.drop(columns='Sales')
-y_val = df_holdout.loc[:, 'Sales']
-
-# X_train, y_train, X_val, y_val = split_validation(
-#     df_train, 2014, 5, 1)
 
 cleaning = DataCleaning(
     store=df_store,
@@ -64,15 +81,13 @@ cleaning = DataCleaning(
     target=cleaning_settings['target'],
 )
 
-X_train_clean, y_train_clean = cleaning.cleaning(
-    X_train, y_train, training=True)
-X_val_clean, y_val_clean = cleaning.cleaning(
-    X_val, y_val, training=False)
+X_train_clean, y_train_clean =\
+    cleaning.cleaning(X_train, y_train, training=True)
+X_val_clean, y_val_clean =\
+    cleaning.cleaning(X_val, y_val, training=False)
 
+# TODO May be required if one-hot encoding on test set misses some features
 #X_val_clean.loc[:, ['StateHoliday_0', 'StateHoliday_b', 'StateHoliday_c']] = 0
-
-RANDOM_SEED = 42
-CORES = -1
 
 rf_settings = dict(
     n_estimators=50,
@@ -88,15 +103,32 @@ xg_settings = dict(
     n_jobs=CORES,
 )
 
-pipes = define_pipelines(df_store, cleaning_settings, rf_settings, xg_settings)
+pipes = define_pipelines(
+    df_store,
+    cleaning_settings,
+    rf_settings,
+    xg_settings
+)
 
-# single_run(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
+# A single run of the model with current parameters
+single_run(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
 
-single_run2(pipes, X_train_clean, y_train_clean,
-            X_val_clean, y_val_clean, X_train)
+# Use this to return additional data fields
+# single_run2(
+#     pipes,
+#     X_train_clean,
+#     y_train_clean,
+#     X_val_clean,
+#     y_val_clean,
+#     X_train,
+#     X_val,
+#)
 
-
+## Use this to drop each feature in turn and return the score without it
 #features_drop1(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
+
+## Us this to search over hyper-parameter ranges definde above and print scores
+# TODO (NOT IMPLEMENTED)
 
 # rf_sets = dict(
 #     n_estimators=[16, 48, 64, 96],
