@@ -140,4 +140,3 @@ class DataCleaning():
             df_p = self.mean_encoding(df_p)
             df_p = df_p.drop(columns=self.dropped_columns)
             return df_p.drop(columns=['Sales']), df_p['Sales']
-            return df_p, Y
