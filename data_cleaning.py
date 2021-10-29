@@ -62,7 +62,9 @@ def ohe(df, hot_encoded_columns):
     """
     df_copy = df.copy()
     df_copy = pd.get_dummies(df, prefix = hot_encoded_columns,\
-        dummy_na = True, columns = hot_encoded_columns, drop_first = True)    
+                dummy_na = True, columns = hot_encoded_columns, drop_first = True)
+    
+
     return df_copy
 
 def filling(df, filled_columns, filling_function):
@@ -81,7 +83,7 @@ def storetype_replacing(df):
     Take a dataframe, with a store column, erase the type dac, and keep the type b only.
     """
     df_copy = df.copy()
-    mask_b = df.loc[:, 'StoreType'] == 'b'
+    mask_b = df_copy.loc[:, 'StoreType'] == 'b'
     df_copy.loc[mask_b, 'StoreType'] = 1
     df_copy.loc[~mask_b, 'StoreType'] = 0
     return df_copy 
