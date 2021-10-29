@@ -99,9 +99,9 @@ def features_drop1(pipes, X_train, y_train, X_val, y_val):
         scores = {}
         for feature1 in X_train.columns:
             X_train_drop1 = X_train.drop(columns=[feature1])
-            X_val_drop1 = X_val.drop(columsn=[feature1])
+            X_val_drop1 = X_val.drop(columns=[feature1])
             pipe.fit(X_train_drop1, y_train)
-            y_hat = pipe.predict(X_val_drop1, y_val)
+            y_hat = pipe.predict(X_val_drop1)
             scores[feature1] = round(rmspe(y_hat, y_val.to_numpy()), 2)
         print(pipe)
         print(scores)
@@ -152,3 +152,84 @@ def single_run(pipes, X_train, y_train, X_val, y_val):
         print('')
         for key, values in metric.items():
             print(key, values)
+
+
+def single_run2(pipes, X_train, y_train, X_val, y_val, X_train_full, X_val_full):
+
+    for pipe in pipes:
+        pipe.fit(X_train, y_train)
+    print('')
+    print('Training performance:')
+    training_metrics = evaluate_models(
+        pipes, X_train, y_train)
+
+    print(
+        'Mean as Baseline (RMSPE)',
+        rmspe(np.full_like(y_train, np.mean(
+            y_train)), y_train.to_numpy())
+    )
+
+    for metric in training_metrics:
+        print('')
+        for key, values in metric.items():
+            print(key, values)
+
+    print('')
+    print('Validation performance:')
+    validation_metrics = evaluate_models(pipes, X_val, y_val)
+
+    print(
+        'Mean as Baseline (RMSPE)',
+        rmspe(np.full_like(y_val, np.mean(
+            y_train)), y_val.to_numpy())
+    )
+
+    for metric in validation_metrics:
+        print('')
+        for key, values in metric.items():
+            print(key, values)
+
+    X_train.loc[:, 'Date'] = pd.to_datetime(X_train_full.loc[:, 'Date'])
+    X_val.loc[:, 'Date'] = pd.to_datetime(X_val_full.loc[:, 'Date'])
+
+    return X_train, y_train, X_val, y_val, training_metrics, validation_metrics
+
+
+# def evaluation_stuff():
+#     metrics = []
+
+#     for pipe in pipes:
+#         pipe.fit(X_train, y_train)
+#     print('')
+#     print('Training performance:')
+#     training_metrics = evaluate_models(
+#         pipes, X_train, y_train)
+
+#     print(
+#         'Mean as Baseline (RMSPE)',
+#         rmspe(np.full_like(y_train, np.mean(
+#             y_train)), y_train.to_numpy())
+#     )
+
+#     for metric in training_metrics:
+#         print('')
+#         for key, values in metric.items():
+#             print(key, values)
+
+#     print('')
+#     print('Validation performance:')
+#     validation_metrics = evaluate_models(pipes, X_val, y_val)
+
+#     print(
+#         'Mean as Baseline (RMSPE)',
+#         rmspe(np.full_like(y_val, np.mean(
+#             y_train)), y_val.to_numpy())
+#     )
+
+#     for metric in validation_metrics:
+#         print('')
+#         for key, values in metric.items():
+#             print(key, values)
+
+
+#     return X_train, y_train, X_val, y_val, metrics

@@ -5,6 +5,7 @@ from models import split_validation
 from models import define_pipelines
 from models import features_drop1
 from models import single_run
+from models import single_run2
 from models import grid_search
 
 from data_cleaning import DataCleaning
@@ -89,9 +90,13 @@ xg_settings = dict(
 
 pipes = define_pipelines(df_store, cleaning_settings, rf_settings, xg_settings)
 
-single_run(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
+# single_run(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
 
-# features_drop1(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
+single_run2(pipes, X_train_clean, y_train_clean,
+            X_val_clean, y_val_clean, X_train)
+
+
+#features_drop1(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
 
 # rf_sets = dict(
 #     n_estimators=[16, 48, 64, 96],
