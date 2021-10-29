@@ -23,9 +23,9 @@ df_holdout = pd.read_csv('data/holdout.csv')
 hot_encoded_columns = [
     'Open',
     'StateHoliday',
-    'StoreType',
     'Assortment',
     'SchoolHoliday',
+    'StoreType',
 ]
 
 dropped_columns = [
@@ -52,12 +52,11 @@ target = [
 df_p = merge_data(df_train, df_store)
 df_p = df_p.drop(columns=dropped_columns)
 df_p = date_treatment(df_p)
-df_p = storetype_replacing(df_p)
+#df_p = storetype_replacing(df_p)
 df_p = ohe(df_p, hot_encoded_columns)
 df_p = filling(df_p, filled_in_median, np.median)
 df_p = filling(df_p, filled_in_mode, np.min)
 df_p = remove_zero_sales(df_p)
-
 
 if TESTING:
     print('WARNING - test run, using just 10k data points!')

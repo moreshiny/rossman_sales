@@ -81,7 +81,8 @@ def storetype_replacing(df):
     Take a dataframe, with a store column, erase the type dac, and keep the type b only.
     """
     df_copy = df.copy()
-    mask_b = df.loc[:, 'StoreType'] == 'b'
+    mask_b = df_copy.loc[:, 'StoreType'] == 'b'
+
     df_copy.loc[mask_b, 'StoreType'] = 1
     df_copy.loc[~mask_b, 'StoreType'] = 0
     return df_copy 
