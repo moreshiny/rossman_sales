@@ -4,8 +4,7 @@ from models import split_validation
 from models import define_pipelines
 from models import single_run
 from models import features_drop1
-from models import single_run2
-from models import grid_search
+from models import hparm_search
 
 from data_cleaning import DataCleaning
 
@@ -89,6 +88,7 @@ X_val_clean, y_val_clean =\
 # TODO May be required if one-hot encoding on test set misses some features
 #X_val_clean.loc[:, ['StateHoliday_0', 'StateHoliday_b', 'StateHoliday_c']] = 0
 
+# Use this for a single run of the model with current parameters
 rf_settings = dict(
     n_estimators=50,
     max_depth=50,
@@ -103,32 +103,15 @@ xg_settings = dict(
     n_jobs=CORES,
 )
 
-pipes = define_pipelines(
-    df_store,
-    cleaning_settings,
-    rf_settings,
-    xg_settings
-)
-
-# A single run of the model with current parameters
+pipes = define_pipelines(rf_settings, xg_settings)
 single_run(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
 
-# Use this to return additional data fields
-# single_run2(
-#     pipes,
-#     X_train_clean,
-#     y_train_clean,
-#     X_val_clean,
-#     y_val_clean,
-#     X_train,
-#     X_val,
-#)
 
-## Use this to drop each feature in turn and return the score without it
+# Use this to drop each feature in turn and return the score without it
 #features_drop1(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
 
-## Us this to search over hyper-parameter ranges definde above and print scores
-# TODO (NOT IMPLEMENTED)
+
+# Use this to search over hyper-parameter ranges definde above and print scores
 
 # rf_sets = dict(
 #     n_estimators=[16, 48, 64, 96],
@@ -140,9 +123,10 @@ single_run(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
 # xg_sets = dict(
 #     n_estimators=[24, 48, 96, 192],
 #     max_depth=[1, 3, 5, 7],
+#     #TODO learning rate?
 #     random_state=RANDOM_SEED,
 #     n_jobs=CORES,
 # )
 
-# grid_search(X_train_clean, y_train_clean, X_val_clean,
+# hparm_search(X_train_clean, y_train_clean, X_val_clean,
 #             y_val_clean, rf_sets, xg_sets)
