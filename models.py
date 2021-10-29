@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 import datetime as dt
+
+from data_cleaning import DataCleaning
+
 from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor
 
@@ -21,60 +24,56 @@ def rmspe(preds: np.array, actuals: np.array) -> float:
     return 100 * np.linalg.norm((actuals - preds) / actuals) / np.sqrt(preds.shape[0])
 
 
-
-def split_validation(df: pd.DataFrame, year: int, month: int, day: int) -> Tuple[pd.DataFrame]:
-    val_from = dt.date(year, month, day)
-    val_msk = df.loc[:, 'Date'] < val_from
-
-    train = df.loc[val_msk, :]
-    val = df.loc[~val_msk, :]
-
-    X_train = train.drop(columns=['Sales', 'Date'])
-    y_train = train.loc[:, 'Sales']
-    X_val = val.drop(columns=['Sales', 'Date'])
-    y_val = val.loc[:, 'Sales']
-
-    return (X_train, y_train, X_val, y_val)
-
-
-def train_models(X_train: pd.DataFrame, y_train: pd.DataFrame) -> Tuple[Pipeline]:
-    print('Start modeling...')
+def define_pipelines(store, cleaning_settings, rf_settings, xg_settings) -> Tuple[Pipeline]:
 
     pipe_rf = Pipeline([
-        ('scaler', MinMaxScaler()),
-        ('model', RandomForestRegressor(
-            n_estimators=50,
-            max_depth=50,
-            random_state=42,
-            n_jobs=-1,
-        )
+        (
+            'scaler', MinMaxScaler()
+        ),
+        (
+            'model', RandomForestRegressor(
+                n_estimators=rf_settings['n_estimators'],
+                max_depth=rf_settings['max_depth'],
+                random_state=rf_settings['random_state'],
+                n_jobs=rf_settings['n_jobs'],
+            )
         ),
     ])
-
-    print('Running model', type(pipe_rf['model']))
-    pipe_rf.fit(X_train, y_train)
 
     pipe_xg = Pipeline([
         ('scaler', MinMaxScaler()),
         ('model', XGBRegressor(
-            n_estimators=250,
-            max_depth=3,
-            random_state=42,
-            n_jobs=-1,
+            n_estimators=xg_settings['n_estimators'],
+            max_depth=xg_settings['max_depth'],
+            random_state=xg_settings['random_state'],
+            n_jobs=xg_settings['n_jobs'],
         )
         ),
     ])
 
-    print('Running model', type(pipe_xg['model']))
-    pipe_xg.fit(X_train, y_train)
-
     return (pipe_rf, pipe_xg)
+
+
+def split_validation(df: pd.DataFrame, year: int, month: int, day: int) -> Tuple[pd.DataFrame]:
+    val_from = dt.date(year, month, day)
+    val_msk = pd.to_datetime(df.loc[:, 'Date']).dt.date < val_from
+
+    train = df.loc[val_msk, :]
+    val = df.loc[~val_msk, :]
+
+    X_train = train.drop(columns=['Sales'])
+    y_train = train.loc[:, ['Sales']]
+    X_val = val.drop(columns=['Sales'])
+    y_val = val.loc[:, ['Sales']]
+
+    return (X_train, y_train, X_val, y_val)
 
 
 def evaluate_models(models: Tuple[object], X_val: pd.DataFrame, y_val: pd.DataFrame) -> List[Dict]:
     metrics = []
     for model in models:
         metric = {}
+        print(X_val.shape)
         y_hat = model.predict(X_val)
         metric['model'] = type(model['model'])
         # TODO: is the feature order really correct?
@@ -93,3 +92,63 @@ def evaluate_models(models: Tuple[object], X_val: pd.DataFrame, y_val: pd.DataFr
         metrics.append(metric.copy())
 
     return metrics
+
+
+def features_drop1(pipes, X_train, y_train, X_val, y_val):
+    for pipe in pipes:
+        scores = {}
+        for feature1 in X_train.columns:
+            X_train_drop1 = X_train.drop(columns=[feature1])
+            X_val_drop1 = X_val.drop(columsn=[feature1])
+            pipe.fit(X_train_drop1, y_train)
+            y_hat = pipe.predict(X_val_drop1, y_val)
+            scores[feature1] = round(rmspe(y_hat, y_val.to_numpy()), 2)
+        print(pipe)
+        print(scores)
+
+
+def feature_permutation(pipes, X_train, y_train, X_val, y_val):
+    n_features = X_train.columns
+    pass
+
+
+def grid_search(X_train, y_train, X_val, y_val, rf_sets, xg_sets):
+    for key in rf_sets.keys():
+        for setting in rf_sets[key]:
+            pass
+
+
+def single_run(pipes, X_train, y_train, X_val, y_val):
+
+    for pipe in pipes:
+        pipe.fit(X_train, y_train)
+    print('')
+    print('Training performance:')
+    training_metrics = evaluate_models(
+        pipes, X_train, y_train)
+
+    print(
+        'Mean as Baseline (RMSPE)',
+        rmspe(np.full_like(y_train, np.mean(
+            y_train)), y_train.to_numpy())
+    )
+
+    for metric in training_metrics:
+        print('')
+        for key, values in metric.items():
+            print(key, values)
+
+    print('')
+    print('Validation performance:')
+    validation_metrics = evaluate_models(pipes, X_val, y_val)
+
+    print(
+        'Mean as Baseline (RMSPE)',
+        rmspe(np.full_like(y_val, np.mean(
+            y_train)), y_val.to_numpy())
+    )
+
+    for metric in validation_metrics:
+        print('')
+        for key, values in metric.items():
+            print(key, values)
