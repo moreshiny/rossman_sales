@@ -100,6 +100,7 @@ def evaluate_models(models: Tuple[object], X_val: pd.DataFrame, y_val: pd.DataFr
             reverse=True
         )
         metric['rmspe'] = round(rmspe(y_hat, y_val.to_numpy()), 2)
+        metric['prediction'] = y_hat
         metrics.append(metric.copy())
 
     return metrics
