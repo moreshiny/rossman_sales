@@ -1,59 +1,105 @@
 import numpy as np
 import pandas as pd
-
 import datetime as dt
-
 from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor
 
-from typing import List
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+from typing import List, Dict, Tuple
+
+MODELS = [RandomForestRegressor, XGBRegressor]
 
 
-def metric(preds, actuals):
+def rmspe(preds: np.array, actuals: np.array) -> float:
     # As provided as finale metric, DO NOT MODIFY
-    """ As provided """
+    """ As provided - calculates the root mean square percentage error """
     preds = preds.reshape(-1)
     actuals = actuals.reshape(-1)
     assert preds.shape == actuals.shape
     return 100 * np.linalg.norm((actuals - preds) / actuals) / np.sqrt(preds.shape[0])
 
 
-def apply_models(df: pd.DataFrame) -> list:
-
-    print('Start modeling...')
-
-    models = []
-
-    # remove all training and test rows with zero sales
+def remove_zero_sales(df: pd.DataFrame) -> pd.DataFrame:
+    """ Remove all training and test rows with zero sales """
     msk_zero_sales = df.loc[:, 'Sales'] == 0
-    full = df.loc[~msk_zero_sales, :].copy()
+    return df.loc[~msk_zero_sales, :]
 
-    # convert to date, remove once cleaning changed
-    full.loc[:, 'Date'] = full.loc[:, 'Date'].apply(lambda x: x.date())
 
-    # use last three months of training data as validation set
-    val_from = dt.date(2014, 5, 1)
-    val_msk = full.loc[:, 'Date'] < val_from
+def convert_date(df: pd.DataFrame) -> pd.DataFrame:
+    """ Convert datetime to date, remove once cleaning changed """
+    df.loc[:, 'Date'] = df.loc[:, 'Date'].apply(lambda x: x.date())
+    return df
 
-    train = full.loc[val_msk, :]
-    val = full.loc[~val_msk, :]
+
+def split_validation(df: pd.DataFrame, year: int, month: int, day: int) -> Tuple[pd.DataFrame]:
+    val_from = dt.date(year, month, day)
+    val_msk = df.loc[:, 'Date'] < val_from
+
+    train = df.loc[val_msk, :]
+    val = df.loc[~val_msk, :]
 
     X_train = train.drop(columns=['Sales', 'Date'])
     y_train = train.loc[:, 'Sales']
     X_val = val.drop(columns=['Sales', 'Date'])
     y_val = val.loc[:, 'Sales']
 
-    for model_type in [RandomForestRegressor, XGBRegressor]:
-        metrics = {}
-        model = model_type()
-        print('Running model', type(model))
-        model.fit(X_train, y_train)
-        y_hat_rf_train = model.predict(X_train)
-        y_hat_rf_val = model.predict(X_val)
-        metrics['name'] = type(model)
-        metrics['met_train'] = metric(y_hat_rf_train, y_train.to_numpy())
-        metrics['met_val'] = metric(y_hat_rf_val, y_val.to_numpy())
-        models.append(metrics)
-        print('Done', type(model))
+    return (X_train, y_train, X_val, y_val)
 
-    return models
+
+def train_models(X_train: pd.DataFrame, y_train: pd.DataFrame) -> Tuple[Pipeline]:
+    print('Start modeling...')
+
+    pipe_rf = Pipeline([
+        ('scaler', StandardScaler()),
+        ('model', RandomForestRegressor(
+            n_estimators=50,
+            max_depth=50,
+            random_state=42,
+            n_jobs=-1,
+        )
+        ),
+    ])
+
+    print('Running model', type(pipe_rf['model']))
+    pipe_rf.fit(X_train, y_train)
+
+    pipe_xg = Pipeline([
+        ('scaler', StandardScaler()),
+        ('model', XGBRegressor(
+            n_estimators=250,
+            max_depth=3,
+            random_state=42,
+            nthread=-1,
+        )
+        ),
+    ])
+
+    print('Running model', type(pipe_xg['model']))
+    pipe_xg.fit(X_train, y_train)
+
+    return (pipe_rf, pipe_xg)
+
+
+def evaluate_models(models: Tuple[object], X_val: pd.DataFrame, y_val: pd.DataFrame) -> List[Dict]:
+    metrics = []
+    for model in models:
+        metric = {}
+        y_hat = model.predict(X_val)
+        metric['model'] = type(model['model'])
+        # TODO: is the feature order really correct?
+        metric['feat_importance'] = sorted(
+            list(
+                zip(
+                    list(X_val.columns),
+                    list(model['model'].feature_importances_.round(2))
+                )
+            ),
+            key=lambda x: x[1],
+            reverse=True
+        )
+        metric['rmspe'] = round(rmspe(y_hat, y_val.to_numpy()), 2)
+        metrics.append(metric.copy())
+
+    return metrics
