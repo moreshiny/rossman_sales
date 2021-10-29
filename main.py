@@ -58,10 +58,6 @@ df_p = filling(df_p, filled_in_median, np.median)
 df_p = filling(df_p, filled_in_mode, np.min)
 df_p = remove_zero_sales(df_p)
 
-for col in df_p.columns:
-         print(f'{col}:', df_p.loc[:, col].isnull().sum())
-    
-
 if TESTING:
     print('WARNING - test run, using just 10k data points!')
     df_p = df_p[:10000]

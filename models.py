@@ -4,7 +4,7 @@ import datetime as dt
 from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor
 
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.pipeline import Pipeline
 
 from typing import List, Dict, Tuple
@@ -41,7 +41,7 @@ def train_models(X_train: pd.DataFrame, y_train: pd.DataFrame) -> Tuple[Pipeline
     print('Start modeling...')
 
     pipe_rf = Pipeline([
-        ('scaler', StandardScaler()),
+        ('scaler', MinMaxScaler()),
         ('model', RandomForestRegressor(
             n_estimators=50,
             max_depth=50,
@@ -55,7 +55,7 @@ def train_models(X_train: pd.DataFrame, y_train: pd.DataFrame) -> Tuple[Pipeline
     pipe_rf.fit(X_train, y_train)
 
     pipe_xg = Pipeline([
-        ('scaler', StandardScaler()),
+        ('scaler', MinMaxScaler()),
         ('model', XGBRegressor(
             n_estimators=250,
             max_depth=3,
@@ -89,6 +89,7 @@ def evaluate_models(models: Tuple[object], X_val: pd.DataFrame, y_val: pd.DataFr
             reverse=True
         )
         metric['rmspe'] = round(rmspe(y_hat, y_val.to_numpy()), 2)
+        metric['prediction'] = y_hat
         metrics.append(metric.copy())
 
     return metrics
