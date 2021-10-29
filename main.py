@@ -14,7 +14,7 @@ from models import train_models
 from models import evaluate_models
 from models import rmspe
 
-TESTING = True
+TESTING = False
 
 df_train = pd.read_csv('data/train.csv')
 df_store = pd.read_csv('data/store.csv')
