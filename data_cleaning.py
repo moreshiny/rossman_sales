@@ -64,12 +64,15 @@ class DataCleaning():
             columns=['DayOfWeek', 'month', 'weekday', 'day'])
         return df_copy
 
+
     def ohe(self, df, training=True):
+
         """
         Input: A dataframe df, and a list of strings which are columns of the data frame
         Perform one hot encodind the list of inputed columns using the get_dummy.
         """
         df_copy = df.copy()
+
         if training: 
             self.encode = OneHotEncoder()
             transformed = self.encode.transform(
@@ -87,7 +90,6 @@ class DataCleaning():
             df_copy = pd.concat([df_copy, ohe_df], axis=1).drop(
                 [self.hot_encoded_columns], axis=1)
             return df_copy
-
 
     def filling(self, df, filling_function, filled_columns):
         """
