@@ -33,11 +33,6 @@ finally:
 
 # TODO add asserts to check assumptions on test data
 
-SALES_CUT_QUANTILE = 0.98
-msk_high_sales = df_train.loc[:, 'Sales'] >\
-    df_train.loc[:, 'Sales'].quantile(q=SALES_CUT_QUANTILE)
-df_train.loc[msk_high_sales, 'Sales'] =\
-    df_train.loc[:, 'Sales'].quantile(q=SALES_CUT_QUANTILE)
 
 X_train = df_train.drop(columns='Sales')
 y_train = df_train.loc[:, 'Sales']
@@ -54,7 +49,6 @@ cleaning_settings = dict(
         'StateHoliday',
         'Assortment',
         'SchoolHoliday',
-        'StoreType',
     ],
     dropped_columns=[
         'Store',
@@ -65,6 +59,7 @@ cleaning_settings = dict(
         'PromoInterval',
         'Date',
         'Open',
+        'StoreType',
     ],
     filled_in_median=[
         'CompetitionDistance',
@@ -91,8 +86,6 @@ X_train_clean, y_train_clean =\
 X_val_clean, y_val_clean =\
     cleaning.cleaning(X_val, y_val, training=False)
 
-# TODO May be required if one-hot encoding on test set misses some features
-#X_val_clean.loc[:, ['StateHoliday_0', 'StateHoliday_b', 'StateHoliday_c']] = 0
 
 # Use this for a single run of the model with current parameters
 rf_settings = dict(

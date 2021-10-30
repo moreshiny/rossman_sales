@@ -69,10 +69,16 @@ class DataCleaning():
 
     def cleaning_state_holiday(self, df):
         """change the state holiday type 0 to no"""
-        mask_0 = (df.loc[:,
-                         'StateHoliday'] == '0') | (df.loc[:, 'StateHoliday'] == 0.0)
-        df.loc[mask_0, 'StateHoliday'] = 'no'
-        return df
+        df_copy = df.copy()
+        mask_0 = (df_copy.loc[:,
+                              'StateHoliday'] == '0') | (df_copy.loc[:, 'StateHoliday'] == 0.0)
+        df_copy.loc[mask_0, 'StateHoliday'] = 'no'
+        return df_copy
+
+    def store_type_encoding(self, df):
+        """
+        Add two new features: store type median average and standard deviation. 
+        """
 
     def ohe(self, df):
         """
@@ -107,38 +113,59 @@ class DataCleaning():
         Perform the mean encoding on the store on the entire past of the serie.
         """
         list_store = set(X.loc[:, 'Store'])
+        list_type = set(X.loc[:, 'StoreType'])
         self.list_store = list_store
+        self.list_type = list_type
         dict_store_mean = dict()
         dict_store_std = dict()
         dict_store_iqr = dict()
+        dict_type_median = dict()
+        dict_type_std = dict()
+
         for store in list_store:
             mask_store = X.loc[:, 'Store'] == store
-            mean_store = np.log(np.median(Y.loc[mask_store])+1)
+            mean_store = np.median(Y.loc[mask_store])
             std_store = np.std(Y.loc[mask_store])
             iqr_store = np.subtract(
                 *np.percentile(Y.loc[mask_store], [75, 25]))
             dict_store_mean[store] = mean_store
             dict_store_std[store] = std_store
             dict_store_iqr[store] = iqr_store
+        for type in list_type:
+            mask_type = X.loc[:, 'StoreType'] == type
+            median_type = np.mean(Y.loc[mask_type])
+            std_type = np.std(Y.loc[mask_type])
+            dict_type_median[type] = median_type
+            dict_type_std[type] = std_type
         self.dict_store_mean = dict_store_mean
         self.dict_store_std = dict_store_std
         self.dict_store_iqr = dict_store_iqr
-        self.dict_mean = np.log(np.median(list(dict_store_mean.values()))+1)
+        self.dict_type_median = dict_type_median
+        self.dict_type_std = dict_type_std
+        self.dict_mean = np.median(list(dict_store_mean.values()))
         self.dict_std = np.std(list(dict_store_std.values()))
         self.dict_iqr = np.subtract(
             *np.percentile(list(dict_store_iqr.values()), [75, 25]))
+        self.dict_type_median_v = np.median(list(dict_type_median.values()))
+        self.dict_type_std_v = np.median(list(dict_type_std.values()))
         pass
 
     def mean_encoding(self, df):
         """Perform the mean encoding based on the mean sales dictionary per store"""
-        df.loc[:, 'mean_sales'] = self.dict_mean
+        df.loc[:, 'median_sales'] = self.dict_mean
         df.loc[:, 'std_sales'] = self.dict_std
+        df.loc[:, 'type_median'] = self.dict_type_median_v
+        df.loc[:, 'type_std'] = self.dict_type_std_v
         #df.loc[:, 'irq'] = self.dict_iqr
         for store in self.list_store:
             mask_store = df.loc[:, 'Store'] == store
             df.loc[mask_store, 'mean_sales'] = self.dict_store_mean[store]
             df.loc[mask_store, 'std_sales'] = self.dict_store_std[store]
             #df.loc[mask_store, 'iqr'] = self.dict_store_iqr[store]
+        for type in self.list_type:
+            mask_type = df.loc[:, 'StoreType'] == type
+            df.loc[mask_type, 'type_median'] = self.dict_type_median[type]
+            df.loc[mask_type, 'type_std'] = self.dict_type_std[type]
         return df
 
     def cleaning(self, X, Y, training=True):
@@ -147,31 +174,33 @@ class DataCleaning():
         """
         if training:
             print(
-                "Cyclicality removed. Added columns: median log encoding for the store, and added standard deviation, best score for the boost")
+                "Cyclicality removed. Added columns: log median, std, encoding for the store, somethin, and added standard deviation, best score for the boost")
             df_p = pd.concat([X, Y], axis=1)
-            df_p = self.cleaning_state_holiday(df_p)
             df_p = df_p.dropna(subset=['Store', 'Sales'])
+            df_p = self.merge_data(df_p)
+            df_p = self.cleaning_state_holiday(df_p)
             training = df_p.drop(columns=['Sales'])
             self.mean_encoding_dictionary(training, df_p['Sales'])
-            df_p = self.merge_data(df_p)
             df_p = self.remove_zero_sales(df_p)
             df_p = self.date_treatment(df_p)
+            df_p = self.mean_encoding(df_p)
             df_p = self.ohe(df_p)
             df_p = self.filling(df_p, np.median, self.filled_in_median)
             df_p = self.filling(df_p, np.min, self.filled_in_mode)
-            df_p = self.mean_encoding(df_p)
             df_p = df_p.drop(columns=self.dropped_columns)
+            print("cleaning on training done succesfully")
             return df_p.drop(columns=['Sales']), df_p['Sales']
         else:
             df_p = pd.concat([X, Y], axis=1)
-            df_p = self.cleaning_state_holiday(df_p)
             df_p = df_p.dropna(subset=['Store', 'Sales'])
             df_p = self.merge_data(df_p)
+            df_p = self.cleaning_state_holiday(df_p)
             df_p = self.remove_zero_sales(df_p)
             df_p = self.date_treatment(df_p)
+            df_p = self.mean_encoding(df_p)
             df_p = self.ohe(df_p)
             df_p = self.filling(df_p, np.median, self.filled_in_median)
             df_p = self.filling(df_p, np.min, self.filled_in_mode)
-            df_p = self.mean_encoding(df_p)
             df_p = df_p.drop(columns=self.dropped_columns)
+            print("cleaning on test done succesfully")
             return df_p.drop(columns=['Sales']), df_p['Sales']
