@@ -19,7 +19,7 @@ def rmspe(preds: np.array, actuals: np.array) -> float:
     return 100 * np.linalg.norm((actuals - preds) / actuals) / np.sqrt(preds.shape[0])
 
 
-def define_pipelines(rf_settings, xg_settings) -> Tuple[Pipeline]:
+def define_pipelines(xg_settings) -> Tuple[Pipeline]:
     # TODO remove scaler as it's not needed?
     # pipe_rf = Pipeline([
     #     (

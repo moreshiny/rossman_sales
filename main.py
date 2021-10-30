@@ -103,7 +103,7 @@ xg_settings = dict(
     n_jobs=CORES,
 )
 
-pipes = define_pipelines(rf_settings, xg_settings)
+pipes = define_pipelines(xg_settings)
 single_run(pipes, X_train_clean, y_train_clean,
            X_val_clean, y_val_clean, X_train, X_val)
 
