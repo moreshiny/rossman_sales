@@ -93,24 +93,41 @@ class DataCleaning():
 
     def mean_encoding_dictionary(self, X, Y):
         """
-        Perform the mean encoding on the store on the entire past of the serie. 
+        Perform the mean encoding on the store on the entire past of the serie.
         """
         list_store = set(X.loc[:, 'Store'])
-        dict_store = dict()
+        self.list_store = list_store
+        dict_store_mean = dict()
+        dict_store_std = dict()
+        dict_store_iqr = dict()
         for store in list_store:
             mask_store = X.loc[:, 'Store'] == store
-            mean_store = np.mean(Y.loc[mask_store])
-            dict_store[store] = mean_store
-        self.dict_store = dict_store
-        self.dict_mean = np.mean(list(dict_store.values()))
+            mean_store = np.median(Y.loc[mask_store])
+            std_store = np.std(Y.loc[mask_store])
+            iqr_store = np.subtract(
+                *np.percentile(Y.loc[mask_store], [75, 25]))
+            dict_store_mean[store] = mean_store
+            dict_store_std[store] = std_store
+            dict_store_iqr[store] = iqr_store
+        self.dict_store_mean = dict_store_mean
+        self.dict_store_std = dict_store_std
+        self.dict_store_iqr = dict_store_iqr
+        self.dict_mean = np.median(list(dict_store_mean.values()))
+        self.dict_std = np.std(list(dict_store_std.values()))
+        self.dict_iqr = np.subtract(
+            *np.percentile(list(dict_store_iqr.values()), [75, 25]))
         pass
 
     def mean_encoding(self, df):
         """Perform the mean encoding based on the mean sales dictionary per store"""
         df.loc[:, 'mean_sales'] = self.dict_mean
-        for store in self.dict_store.keys():
+        df.loc[:, 'std_sales'] = self.dict_std
+        #df.loc[:, 'irq'] = self.dict_iqr
+        for store in self.list_store:
             mask_store = df.loc[:, 'Store'] == store
-            df.loc[mask_store, 'mean_sales'] = self.dict_store[store]
+            df.loc[mask_store, 'mean_sales'] = self.dict_store_mean[store]
+            df.loc[mask_store, 'std_sales'] = self.dict_store_std[store]
+            #df.loc[mask_store, 'iqr'] = self.dict_store_iqr[store]
         return df
 
     def cleaning(self, X, Y, training=True):
@@ -118,6 +135,8 @@ class DataCleaning():
         Take the full data
         """
         if training:
+            print(
+                "Added columns: median encoding for the store, and added standard deviation")
             df_p = pd.concat([X, Y], axis=1)
             df_p = df_p.dropna(subset=['Store', 'Sales'])
             training = df_p.drop(columns=['Sales'])
