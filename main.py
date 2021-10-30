@@ -96,8 +96,9 @@ rf_settings = dict(
 )
 
 xg_settings = dict(
-    n_estimators=250,
+    n_estimators=500,
     max_depth=3,
+    learning_rate=0.2,
     random_state=RANDOM_SEED,
     n_jobs=CORES,
 )
@@ -111,22 +112,25 @@ single_run(pipes, X_train_clean, y_train_clean,
 #features_drop1(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
 
 
-# Use this to search over hyper-parameter ranges definde above and print scores
+#Use this to search over hyper-parameter ranges definde above and print scores
 
 # rf_sets = dict(
-#     n_estimators=[16, 48, 64, 96],
+#     n_estimators=[50, 100, 200, 400],
 #     max_depth=[4, 16, 64, 128],
 #     random_state=RANDOM_SEED,
 #     n_jobs=CORES,
 # )
 
 # xg_sets = dict(
-#     n_estimators=[24, 48, 96, 192],
-#     max_depth=[1, 3, 5, 7],
-#     #TODO learning rate?
+#     n_estimators=[400, 500, 600, 700],
+#     max_depth=[2, 3, 4],
+#     learning_rate=[.1, .2],
 #     random_state=RANDOM_SEED,
 #     n_jobs=CORES,
 # )
 
-# hparm_search(X_train_clean, y_train_clean, X_val_clean,
-#             y_val_clean, rf_sets, xg_sets)
+# best_xg = hparm_search(X_train_clean, y_train_clean, X_val_clean,
+#                        y_val_clean, rf_sets, xg_sets)
+
+# #print(best_rf)
+# print(best_xg)
