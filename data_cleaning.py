@@ -2,7 +2,6 @@
 import pandas as pd
 import numpy as np
 import datetime as dt
-from sklearn.preprocessing import OneHotEncoder
 
 
 class DataCleaning():
@@ -64,32 +63,15 @@ class DataCleaning():
             columns=['DayOfWeek', 'month', 'weekday', 'day'])
         return df_copy
 
-
-    def ohe(self, df, training=True):
-
+    def ohe(self, df):
         """
         Input: A dataframe df, and a list of strings which are columns of the data frame
         Perform one hot encodind the list of inputed columns using the get_dummy.
         """
         df_copy = df.copy()
-
-        if training: 
-            self.encode = OneHotEncoder()
-            transformed = self.encode.transform(
-                df_copy[self.hot_encoded_columns].to_numpy().reshape(-1, 1))
-            ohe_df = pd.DataFrame(
-                transformed, columns=self.encode.get_feature_names())
-            df_copy = pd.concat([df_copy, ohe_df], axis=1).drop(
-                [self.hot_encoded_columns], axis=1)
-            return df_copy
-        else:
-            transformed = self.encode.transform(
-                df_copy[self.hot_encoded_columns].to_numpy().reshape(-1, 1))
-            ohe_df = pd.DataFrame(
-                transformed, columns=self.encode.get_feature_names())
-            df_copy = pd.concat([df_copy, ohe_df], axis=1).drop(
-                [self.hot_encoded_columns], axis=1)
-            return df_copy
+        df_copy = pd.get_dummies(df, prefix=self.hot_encoded_columns,
+                                 dummy_na=True, columns=self.hot_encoded_columns, drop_first=True)
+        return df_copy
 
     def filling(self, df, filling_function, filled_columns):
         """
