@@ -5,13 +5,9 @@ import datetime as dt
 from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor
 
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.pipeline import Pipeline
 
 from typing import List, Dict, Tuple
-
-MODELS = [RandomForestRegressor, XGBRegressor]
-
 
 def rmspe(preds: np.array, actuals: np.array) -> float:
     # As provided as finale metric, DO NOT MODIFY
@@ -25,7 +21,6 @@ def rmspe(preds: np.array, actuals: np.array) -> float:
 def define_pipelines(rf_settings, xg_settings) -> Tuple[Pipeline]:
     #TODO remove scaler as it's not needed?
     pipe_rf = Pipeline([
-        ('scaler', MinMaxScaler()),
         (
             'model', RandomForestRegressor(
                 n_estimators=rf_settings['n_estimators'],
@@ -38,7 +33,6 @@ def define_pipelines(rf_settings, xg_settings) -> Tuple[Pipeline]:
 
     #TODO remove scaler as it's not needed?
     pipe_xg = Pipeline([
-        ('scaler', MinMaxScaler()),
         ('model', XGBRegressor(
             n_estimators=xg_settings['n_estimators'],
             max_depth=xg_settings['max_depth'],
@@ -120,7 +114,6 @@ def hparm_search(X_train, y_train, X_val, y_val, rf_sets, xg_sets):
 
             #TODO remove scaler as it's not needed?
             pipe_rf = Pipeline([
-                ('scaler', MinMaxScaler()),
                 (
                     'model', RandomForestRegressor(
                         n_estimators=rf_settings['n_estimators'],
@@ -162,7 +155,6 @@ def hparm_search(X_train, y_train, X_val, y_val, rf_sets, xg_sets):
 
             #TODO remove scaler as it's not needed?
             pipe_xg = Pipeline([
-                ('scaler', MinMaxScaler()),
                 ('model', XGBRegressor(
                     n_estimators=xg_settings['n_estimators'],
                     max_depth=xg_settings['max_depth'],
@@ -195,7 +187,7 @@ def hparm_search(X_train, y_train, X_val, y_val, rf_sets, xg_sets):
     return best_rf, best_xg
 
 
-def single_run(pipes, X_train, y_train, X_val, y_val):
+def single_run(pipes, X_train, y_train, X_val, y_val, X_train_full, X_val_full):
 
     for pipe in pipes:
         print(f'Fitting{pipe}...')
@@ -231,3 +223,8 @@ def single_run(pipes, X_train, y_train, X_val, y_val):
         print('')
         for key, values in metric.items():
             print(key, values)
+
+    X_train.loc[:, 'Date'] = pd.to_datetime(X_train_full.loc[:, 'Date'])
+    X_val.loc[:, 'Date'] = pd.to_datetime(X_val_full.loc[:, 'Date'])
+
+    return X_train, y_train, X_val, y_val, training_metrics, validation_metrics
