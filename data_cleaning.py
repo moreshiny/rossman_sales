@@ -77,7 +77,7 @@ class DataCleaning():
 
     def store_type_encoding(self, df):
         """
-        Add two new features: store type median average and standard deviation. 
+        Add two new features: store type median average and standard deviation.
         """
 
     def ohe(self, df):
@@ -159,7 +159,7 @@ class DataCleaning():
         #df.loc[:, 'irq'] = self.dict_iqr
         for store in self.list_store:
             mask_store = df.loc[:, 'Store'] == store
-            df.loc[mask_store, 'mean_sales'] = self.dict_store_mean[store]
+            df.loc[mask_store, 'median_sales'] = self.dict_store_mean[store]
             df.loc[mask_store, 'std_sales'] = self.dict_store_std[store]
             #df.loc[mask_store, 'iqr'] = self.dict_store_iqr[store]
         for type in self.list_type:

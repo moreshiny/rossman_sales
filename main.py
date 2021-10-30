@@ -112,7 +112,7 @@ single_run(pipes, X_train_clean, y_train_clean,
 #features_drop1(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
 
 
-#Use this to search over hyper-parameter ranges definde above and print scores
+# Use this to search over hyper-parameter ranges definde above and print scores
 
 # rf_sets = dict(
 #     n_estimators=[50, 100, 200, 400],
