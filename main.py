@@ -33,6 +33,11 @@ finally:
 
 # TODO add asserts to check assumptions on test data
 
+msk_high_sales = df_train.loc[:,
+                              'Sales'] > df_train.loc[:, 'Sales'].quantile(q=.95)
+df_train.loc[msk_high_sales,
+             'Sales'] = df_train.loc[:, 'Sales'].quantile(q=.95)
+
 X_train = df_train.drop(columns='Sales')
 y_train = df_train.loc[:, 'Sales']
 X_val = df_test.drop(columns='Sales')
@@ -45,7 +50,6 @@ y_val = df_test.loc[:, 'Sales']
 # Date is split, converted, and sin/cos transformed where applicable
 cleaning_settings = dict(
     hot_encoded_columns=[
-        'Open',
         'StateHoliday',
         'Assortment',
         'SchoolHoliday',
@@ -59,6 +63,7 @@ cleaning_settings = dict(
         'Promo2SinceYear',
         'PromoInterval',
         'Date',
+        'Open',
     ],
     filled_in_median=[
         'CompetitionDistance',
@@ -104,7 +109,8 @@ xg_settings = dict(
 )
 
 pipes = define_pipelines(rf_settings, xg_settings)
-single_run(pipes, X_train_clean, y_train_clean, X_val_clean, y_val_clean)
+single_run(pipes, X_train_clean, y_train_clean,
+           X_val_clean, y_val_clean, X_train, X_val)
 
 
 # Use this to drop each feature in turn and return the score without it
