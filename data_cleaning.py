@@ -67,6 +67,13 @@ class DataCleaning():
                      ])
         return df_copy
 
+    def cleaning_state_holiday(self, df):
+        """change the state holiday type 0 to no"""
+        mask_0 = (df.loc[:,
+                         'StateHoliday'] == '0') | (df.loc[:, 'StateHoliday'] == 0.0)
+        df.loc[mask_0, 'StateHoliday'] = 'no'
+        return df
+
     def ohe(self, df):
         """
         Input: A dataframe df, and a list of strings which are columns of the data frame
@@ -142,6 +149,7 @@ class DataCleaning():
             print(
                 "Cyclicality removed. Added columns: median log encoding for the store, and added standard deviation, best score for the boost")
             df_p = pd.concat([X, Y], axis=1)
+            df_p = self.cleaning_state_holiday(df_p)
             df_p = df_p.dropna(subset=['Store', 'Sales'])
             training = df_p.drop(columns=['Sales'])
             self.mean_encoding_dictionary(training, df_p['Sales'])
@@ -156,6 +164,7 @@ class DataCleaning():
             return df_p.drop(columns=['Sales']), df_p['Sales']
         else:
             df_p = pd.concat([X, Y], axis=1)
+            df_p = self.cleaning_state_holiday(df_p)
             df_p = df_p.dropna(subset=['Store', 'Sales'])
             df_p = self.merge_data(df_p)
             df_p = self.remove_zero_sales(df_p)
