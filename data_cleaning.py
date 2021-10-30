@@ -46,21 +46,25 @@ class DataCleaning():
         df_copy['weekday'] = df_copy['Date']\
             .apply(lambda x: x.weekday())
         mask_missing_day = df_copy['DayOfWeek'].isna()
-        df_copy['month_sin'] = df_copy['month'].\
-            apply(lambda x: np.sin(2 * np.pi * (x-1) / 12))
-        df_copy['month_cos'] = df_copy['month'].\
-            apply(lambda x: np.cos(2 * np.pi * (x-1) / 12))
-        df_copy['weekday_sin'] = df_copy['weekday'].\
-            apply(lambda x: np.sin(2 * np.pi * x / 7))
-        df_copy['weekday_cos'] = df_copy['weekday'].\
-            apply(lambda x: np.cos(2 * np.pi * x / 7))
-        df_copy['day_sin'] = df_copy['day'].\
-            apply(lambda x: np.sin(2 * np.pi * (x-1) / 30.5))
-        df_copy['day_cos'] = df_copy['day'].\
-            apply(lambda x: np.cos(2 * np.pi * (x-1) / 30.5))
-        df_copy['Date'] = df_copy['Date'].dt.date
+ #       df_copy['month_sin'] = df_copy['month'].\
+ #           apply(lambda x: np.sin(2 * np.pi * (x-1) / 12))
+ #       df_copy['month_cos'] = df_copy['month'].\
+ #           apply(lambda x: np.cos(2 * np.pi * (x-1) / 12))
+ #       df_copy['weekday_sin'] = df_copy['weekday'].\
+ #           apply(lambda x: np.sin(2 * np.pi * x / 7))
+ #       df_copy['weekday_cos'] = df_copy['weekday'].\
+ #           apply(lambda x: np.cos(2 * np.pi * x / 7))
+ #       df_copy['day_sin'] = df_copy['day'].\
+ #           apply(lambda x: np.sin(2 * np.pi * (x-1) / 30.5))
+ #       df_copy['day_cos'] = df_copy['day'].\
+ #           apply(lambda x: np.cos(2 * np.pi * (x-1) / 30.5))
+ #       df_copy['Date'] = df_copy['Date'].dt.date
         df_copy = df_copy.drop(
-            columns=['DayOfWeek', 'month', 'weekday', 'day'])
+            columns=['DayOfWeek',
+                     #            'month',
+                     #             'weekday',
+                     #              'day'
+                     ])
         return df_copy
 
     def ohe(self, df):
@@ -102,7 +106,7 @@ class DataCleaning():
         dict_store_iqr = dict()
         for store in list_store:
             mask_store = X.loc[:, 'Store'] == store
-            mean_store = np.median(Y.loc[mask_store])
+            mean_store = np.log(np.median(Y.loc[mask_store])+1)
             std_store = np.std(Y.loc[mask_store])
             iqr_store = np.subtract(
                 *np.percentile(Y.loc[mask_store], [75, 25]))
@@ -112,7 +116,7 @@ class DataCleaning():
         self.dict_store_mean = dict_store_mean
         self.dict_store_std = dict_store_std
         self.dict_store_iqr = dict_store_iqr
-        self.dict_mean = np.median(list(dict_store_mean.values()))
+        self.dict_mean = np.log(np.median(list(dict_store_mean.values()))+1)
         self.dict_std = np.std(list(dict_store_std.values()))
         self.dict_iqr = np.subtract(
             *np.percentile(list(dict_store_iqr.values()), [75, 25]))
@@ -136,7 +140,7 @@ class DataCleaning():
         """
         if training:
             print(
-                "Added columns: median encoding for the store, and added standard deviation")
+                "Cyclicality removed. Added columns: median log encoding for the store, and added standard deviation, best score for the boost")
             df_p = pd.concat([X, Y], axis=1)
             df_p = df_p.dropna(subset=['Store', 'Sales'])
             training = df_p.drop(columns=['Sales'])
