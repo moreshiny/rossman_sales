@@ -102,12 +102,15 @@ class DataCleaning():
             mean_store = np.mean(Y.loc[mask_store])
             dict_store[store] = mean_store
         self.dict_store = dict_store
+        self.dict_mean = np.mean(list(dict_store.values()))
         pass
 
     def mean_encoding(self, df):
         """Perform the mean encoding based on the mean sales dictionary per store"""
-        df.loc[:, 'mean_sales'] = [self.dict_store[store]
-                                   for store in df.loc[:, 'Store']]
+        df.loc[:, 'mean_sales'] = self.dict_mean
+        for store in self.dict_store.keys():
+            mask_store = df.loc[:, 'Store'] == store
+            df.loc[mask_store, 'mean_sales'] = self.dict_store[store]
         return df
 
     def cleaning(self, X, Y, training=True):
