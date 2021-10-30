@@ -33,10 +33,11 @@ finally:
 
 # TODO add asserts to check assumptions on test data
 
-msk_high_sales = df_train.loc[:,
-                              'Sales'] > df_train.loc[:, 'Sales'].quantile(q=.95)
-df_train.loc[msk_high_sales,
-             'Sales'] = df_train.loc[:, 'Sales'].quantile(q=.95)
+SALES_CUT_QUANTILE = 0.98
+msk_high_sales = df_train.loc[:, 'Sales'] >\
+    df_train.loc[:, 'Sales'].quantile(q=SALES_CUT_QUANTILE)
+df_train.loc[msk_high_sales, 'Sales'] =\
+    df_train.loc[:, 'Sales'].quantile(q=SALES_CUT_QUANTILE)
 
 X_train = df_train.drop(columns='Sales')
 y_train = df_train.loc[:, 'Sales']
