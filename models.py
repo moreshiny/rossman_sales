@@ -187,7 +187,7 @@ def hparm_search(X_train, y_train, X_val, y_val, rf_sets, xg_sets):
     return best_rf, best_xg
 
 
-def single_run(pipes, X_train, y_train, X_val, y_val):
+def single_run(pipes, X_train, y_train, X_val, y_val, X_train_full, X_val_full):
 
     for pipe in pipes:
         print(f'Fitting{pipe}...')
@@ -223,3 +223,8 @@ def single_run(pipes, X_train, y_train, X_val, y_val):
         print('')
         for key, values in metric.items():
             print(key, values)
+
+    X_train.loc[:, 'Date'] = pd.to_datetime(X_train_full.loc[:, 'Date'])
+    X_val.loc[:, 'Date'] = pd.to_datetime(X_val_full.loc[:, 'Date'])
+
+    return X_train, y_train, X_val, y_val, training_metrics, validation_metrics
