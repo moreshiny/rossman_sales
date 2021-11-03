@@ -3,7 +3,6 @@ import pandas as pd
 import datetime as dt
 
 from xgboost import XGBRegressor
-from sklearn.ensemble import RandomForestRegressor
 
 from sklearn.pipeline import Pipeline
 
@@ -19,33 +18,34 @@ def rmspe(preds: np.array, actuals: np.array) -> np.float64:
     return 100 * np.linalg.norm((actuals - preds) / actuals) / np.sqrt(preds.shape[0])
 
 
-def define_pipelines(xg_settings) -> Tuple[Pipeline]:
-    # TODO remove scaler as it's not needed?
-    # pipe_rf = Pipeline([
-    #     (
-    #         'model', RandomForestRegressor(
-    #             n_estimators=rf_settings['n_estimators'],
-    #             max_depth=rf_settings['max_depth'],
-    #             random_state=rf_settings['random_state'],
-    #             n_jobs=rf_settings['n_jobs'],
-    #         )
-    #     ),
-    # ])
+def define_pipelines(models: List[tuple]) -> Tuple[Pipeline]:
+    """ Builds a Pipeline for each model and settings tuple provided.
 
-    # TODO remove scaler as it's not needed?
-    pipe_xg = Pipeline([
-        ('model', XGBRegressor(
-            n_estimators=xg_settings['n_estimators'],
-            max_depth=xg_settings['max_depth'],
-            learning_rate=xg_settings['learning_rate'],
-            random_state=xg_settings['random_state'],
-            n_jobs=xg_settings['n_jobs'],
-        )
-        ),
-    ])
-    return (pipe_xg,)
-    # return (pipe_rf, pipe_xg)
+    Args:
+        models (List of tuples): The model class and settings dict for each
+        model for which a Piple is to be defined. The settings dict key value
+        pairs must be valid model settings, i.e:
 
+        [(sklearn.ensemble.RandomForestegressor, {'n_estimators': 100}]
+
+        Attempts to build an XGBRegressor if just a settings dictionary is
+        passed (legacy call type).
+
+    Returns:
+        Tuple[Pipeline]: A tuple containing Pipelines.
+    """
+
+    # try to translate if a legacy call is made with a dictionary
+    if type(models) is dict:
+        models = [(XGBRegressor, models)]
+
+    pipes = []
+    for model in models:
+        pipe = Pipeline([('model', model[0]()), ])
+        pipe['model'].set_params(** model[1])
+        pipes.append(pipe)
+
+    return tuple(pipes)
 
 def split_validation(df: pd.DataFrame, year: int,
                      month: int, day: int) -> Tuple[pd.DataFrame]:
