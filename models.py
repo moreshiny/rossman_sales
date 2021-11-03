@@ -10,7 +10,7 @@ from sklearn.pipeline import Pipeline
 from typing import List, Dict, Tuple
 
 
-def rmspe(preds: np.array, actuals: np.array) -> float:
+def rmspe(preds: np.array, actuals: np.array) -> np.float64:
     # As provided as finale metric, DO NOT MODIFY
     """ As provided - calculates the root mean square percentage error """
     preds = preds.reshape(-1)
