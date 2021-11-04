@@ -1,5 +1,8 @@
 import pandas as pd
 
+# from sklearn.ensemble import RandomForestRegressor
+# from xgboost.sklearn import XGBRegressor
+
 from models import split_validation
 from models import define_pipelines
 from models import single_run
@@ -88,12 +91,12 @@ X_val_clean, y_val_clean =\
 
 
 # Use this for a single run of the model with current parameters
-rf_settings = dict(
-    n_estimators=50,
-    max_depth=50,
-    random_state=RANDOM_SEED,
-    n_jobs=CORES,
-)
+# rf_settings = dict(
+#     n_estimators=50,
+#     max_depth=50,
+#     random_state=RANDOM_SEED,
+#     n_jobs=CORES,
+# )
 
 xg_settings = dict(
     n_estimators=500,
@@ -129,8 +132,10 @@ single_run(pipes, X_train_clean, y_train_clean,
 #     n_jobs=CORES,
 # )
 
-# best_xg = hparm_search(X_train_clean, y_train_clean, X_val_clean,
-#                        y_val_clean, rf_sets, xg_sets)
+# search_models = [(XGBRegressor, xg_sets), (RandomForestRegressor, rf_sets)]
 
-# #print(best_rf)
-# print(best_xg)
+# best_models = hparm_search(search_models,
+#                            X_train_clean, y_train_clean,
+#                            X_val_clean, y_val_clean)
+
+# print(best_models)

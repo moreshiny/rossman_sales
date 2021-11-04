@@ -47,8 +47,26 @@ def define_pipelines(models: List[tuple]) -> Tuple[Pipeline]:
 
     return tuple(pipes)
 
+
 def split_validation(df: pd.DataFrame, year: int,
                      month: int, day: int) -> Tuple[pd.DataFrame]:
+    """Splits the provided dataframe into a test and validation set and
+    separates feature (X) and target (y) columns. Data before the provided
+    date is allocated to train, data on or after the provided date is
+    allocated to validation.
+
+    Assumes the provided dataframe has a column "Date" in datetime format.
+
+    Args:
+        df (pd.DataFrame): Input data, containing a 'Date' column
+        year (int): Cut-off year
+        month (int): Cut-off month
+        day (int): Cut-off day
+
+    Returns:
+        Tuple[pd.DataFrame]: (X_train, y_train, X_val, y_val)
+    """
+
     val_from = dt.date(year, month, day)
     val_msk = pd.to_datetime(df.loc[:, 'Date']).dt.date < val_from
 
@@ -63,18 +81,29 @@ def split_validation(df: pd.DataFrame, year: int,
     return (X_train, y_train, X_val, y_val)
 
 
-def model_metric(X_val, y_val, model):
+def model_metric(X_val: pd.DataFrame, y_val: pd.DataFrame, pipe: Pipeline) -> dict:
+    """ Makes predictions based on X_val and calculates RMSPE. The return
+        dictionary also includes (training) feature importance and predicted
+        values.
+
+    Args:
+        X_val (pd.DataFrame): Features
+        y_val (pd.DataFrame): Target
+        model (object): A fitted model or pipeline (sklearn style)
+
+    Returns:
+        dict: A dictionary containing model evaluation information.
+    """
     metric = {}
-    y_hat = model.predict(X_val)
-    metric['model'] = type(model['model'])
+    y_hat = pipe.predict(X_val)
+    metric['model'] = type(pipe['model'])
     metric['feat_importance'] = sorted(
         list(
             zip(
                 list(X_val.columns),
-                list(model['model'].feature_importances_.round(2))
+                list(pipe['model'].feature_importances_.round(2))
             )
         ),
-        key=lambda x: x[1],
         reverse=True
     )
     metric['rmspe'] = round(rmspe(y_hat, y_val.to_numpy()), 2)
@@ -82,140 +111,167 @@ def model_metric(X_val, y_val, model):
     return metric
 
 
-def evaluate_models(models: Tuple[object], X_val: pd.DataFrame,
+def evaluate_models(pipes: Tuple[Pipeline], X_val: pd.DataFrame,
                     y_val: pd.DataFrame) -> List[Dict]:
+    """ Calculates metrics for a set of models and returns them as a list
+    of dictionaries.
+
+    Args:
+        models (Tuple[object]): A list of fitted model or pipeline (sklearn style)
+        X_val (pd.DataFrame): Features
+        y_val (pd.DataFrame): Target
+
+    Returns:
+        List[Dict]: List of dictionaries containing model evaluation information.
+    """
     metrics = []
-    for model in models:
-        metric = model_metric(X_val, y_val, model)
+    for pipe in pipes:
+        metric = model_metric(X_val, y_val, pipe)
         metrics.append(metric.copy())
 
     return metrics
 
 
-def features_drop1(pipes, X_train, y_train, X_val, y_val):
+def features_drop1(pipes: List[Pipeline],
+                   X_train: pd.DataFrame, y_train: pd.DataFrame,
+                   X_val: pd.DataFrame, y_val: pd.DataFrame) -> None:
+    """ Calculates the performance of each pipe or model in pipes omiting
+    each feature in turn and printing the result.
+
+    Args:
+        pipes (List[Pipeline]): Model Pipelines to evaluate
+        X_train (pd.DataFrame): Training features
+        y_train (pd.DataFrame): Training target
+        X_val (pd.DataFrame): Validation features
+        y_val (pd.DataFrame): Validation target
+    """
     for pipe in pipes:
         scores = {}
-        for feature1 in X_train.columns:
-            X_train_drop1 = X_train.drop(columns=[feature1])
-            X_val_drop1 = X_val.drop(columns=[feature1])
+        for feature in X_train.columns:
+            X_train_drop1 = X_train.drop(columns=[feature])
+            X_val_drop1 = X_val.drop(columns=[feature])
             pipe.fit(X_train_drop1, y_train)
             y_hat = pipe.predict(X_val_drop1)
-            scores[feature1] = round(rmspe(y_hat, y_val.to_numpy()), 2)
+            scores[feature] = round(rmspe(y_hat, y_val.to_numpy()), 2)
         print(pipe)
         print(scores)
 
 
-def hparm_search(X_train, y_train, X_val, y_val, rf_sets, xg_sets):
+def hparm_search(search_models: List[Tuple],
+                 X_train: pd.DataFrame, y_train: pd.DataFrame,
+                 X_val: pd.DataFrame, y_val: pd.DataFrame) -> List[dict]:
+    """Calculate all combinations of provided hyper-parameters for each
+       model in search_models. Prints progress and returns evaluation
+       information for each model.
 
-    best_score = np.inf
-    best_xg = {}
+    Args:
+        search_models (List[Tuple]): A tuple of model class (sklearn type) and
+                                    settings dictionary.
+        X_train (pd.DataFrame): Training features
+        y_train (pd.DataFrame): Training target
+        X_val (pd.DataFrame): Validation features
+        y_val (pd.DataFrame): Validation target
 
-    for e_index in range(len(xg_sets['n_estimators'])):
-        for d_index in range(len(xg_sets['max_depth'])):
-            for l_index in range(len(xg_sets['learning_rate'])):
+    Returns:
+        List[dict]: A dictionary for each model with evaluation information.
+    """
+    best_models = []
 
-                xg_settings = xg_sets.copy()
-                xg_settings['n_estimators'] = xg_sets['n_estimators'][e_index]
-                xg_settings['max_depth'] = xg_sets['max_depth'][d_index]
-                xg_settings['learning_rate'] = xg_sets['learning_rate'][l_index]
+    for search_model in search_models:
+        best_score = np.inf
+        best_model = {}
+        best_score, best_model = _hparm_search(
+            search_model, X_train, y_train, X_val, y_val, best_score, best_model)
+        print(
+            f'Best score for {search_model[0]}: {best_score}')
+        for key, value in best_model.items():
+            print(key, value)
+        print('')
+        best_models.append(best_model)
 
-                # TODO remove scaler as it's not needed?
-                pipe_xg = Pipeline([
-                    ('model', XGBRegressor(
-                        n_estimators=xg_settings['n_estimators'],
-                        max_depth=xg_settings['max_depth'],
-                        learning_rate=xg_settings['learning_rate'],
-                        random_state=xg_settings['random_state'],
-                        n_jobs=xg_settings['n_jobs'],
-                    )
-                    ),
-                ])
-
-                print(
-                    f'Fitting XG {xg_settings["n_estimators"]}-{xg_settings["max_depth"]}-{xg_settings["learning_rate"]}...')
-                pipe_xg.fit(X_train, y_train)
-                xg_metric = model_metric(X_val, y_val, pipe_xg)
-                print(xg_metric['rmspe'])
-                if xg_metric['rmspe'] < best_score:
-                    best_score = xg_metric['rmspe']
-                    best_xg = dict(
-                        model=pipe_xg,
-                        validation_metrics=xg_metric,
-                        n_estimators=xg_sets['n_estimators'][e_index],
-                        depth=xg_sets['max_depth'][d_index],
-                        learning_rate=xg_sets['learning_rate'][l_index],
-                    )
-                print('...done.')
-
-    print(f'Best score for XG: {best_score}')
-    for key, value in best_xg.items():
-        print(key, value)
-    print('')
-
-    # best_score = np.inf
-    # best_rf = {}
-    # for e_index in range(len(rf_sets['n_estimators'])):
-    #     for d_index in range(len(rf_sets['max_depth'])):
-    #         rf_settings = rf_sets.copy()
-    #         rf_settings['n_estimators'] = rf_sets['n_estimators'][e_index]
-    #         rf_settings['max_depth'] = rf_sets['max_depth'][d_index]
-
-    #         # TODO remove scaler as it's not needed?
-    #         pipe_rf = Pipeline([
-    #             (
-    #                 'model', RandomForestRegressor(
-    #                     n_estimators=rf_settings['n_estimators'],
-    #                     max_depth=rf_settings['max_depth'],
-    #                     random_state=rf_settings['random_state'],
-    #                     n_jobs=rf_settings['n_jobs'],
-    #                 )
-    #             ),
-    #         ])
-    #         print(
-    #             f'Fitting RF {rf_settings["n_estimators"]}-{rf_settings["max_depth"]}...')
-    #         pipe_rf.fit(X_train, y_train)
-    #         rf_metric = model_metric(X_val, y_val, pipe_rf)
-    #         print(rf_metric['rmspe'])
-    #         if rf_metric['rmspe'] < best_score:
-    #             best_score = rf_metric['rmspe']
-    #             best_rf = dict(
-    #                 model=pipe_rf,
-    #                 validation_metrics=rf_metric,
-    #                 n_estimators=rf_sets['n_estimators'][e_index],
-    #                 depth=rf_sets['max_depth'][d_index],
-    #             )
-    #         print('...done.')
-
-    # print(f'Best score for RF: {best_score}')
-    # for key, value in best_rf.items():
-    #     print(key, value)
-    # print('')
-
-    # return best_rf, best_xg
-    return best_xg
+    return best_models
 
 
-def single_run(pipes, X_train, y_train, X_val, y_val, X_train_full, X_val_full):
+def _hparm_search(search_model: tuple,
+                  X_train: pd.DataFrame, y_train: pd.DataFrame,
+                  X_val: pd.DataFrame, y_val: pd.DataFrame,
+                  best_score: float, best_model: dict):
+    """ Helper for hparm_search """
 
+    list_found = False
+    for key in search_model[1].keys():
+        if type(search_model[1][key]) is list:
+            list_found = True
+            for value in search_model[1][key]:
+                search_model_freeze = (search_model[0], search_model[1].copy())
+                search_model_freeze[1][key] = value
+                best_score, best_model =\
+                    _hparm_search(search_model_freeze,
+                                  X_train, y_train,
+                                  X_val, y_val,
+                                  best_score, best_model)
+            break
+
+    if not list_found:
+        pipe = define_pipelines([search_model])[0]
+        print(f'Fitting {pipe["model"]}')
+        for key, value in search_model[1].items():
+            print(key, value)
+        pipe.fit(X_train, y_train)
+        metric = model_metric(X_val, y_val, pipe)
+        print(metric['rmspe'])
+        if metric['rmspe'] < best_score:
+            best_score = metric['rmspe']
+            best_model = dict(
+                model=pipe,
+                validation_metrics=metric,
+            )
+            for key, value in search_model[1].items():
+                best_model[key] = value
+        print('...done.')
+
+    return best_score, best_model
+
+
+def single_run(pipes: Tuple[Pipeline],
+               X_train: pd.DataFrame, y_train: pd.DataFrame,
+               X_val: pd.DataFrame, y_val: pd.DataFrame,
+               X_train_full: pd.DataFrame, X_val_full: pd.DataFrame) -> Tuple:
+    """ Fits the models passed in pipes and reports validation metrics.
+
+        Also returns variables for analysis charts.
+
+    Args:
+        pipes (Tuple[Pipeline]): Set of defined models to fit
+        X_train (pd.DataFrame): Training features
+        y_train (pd.DataFrame): Training target
+        X_val (pd.DataFrame): Validation features
+        y_val (pd.DataFrame): Validation target
+        X_train_full (pd.DataFrame): Full unclean training features
+        X_val_full (pd.DataFrame): Full unclrean training target
+
+    Returns:
+        Tuple: (X_train, y_train, X_val, y_val, training_metrics, validation_metrics)
+    """
     for pipe in pipes:
         print(f'Fitting{pipe}...')
         pipe.fit(X_train, y_train)
         print('...done.')
-    # print('')
-    # print('Training performance:')
+    print('')
+    print('Training performance:')
     training_metrics = evaluate_models(
         pipes, X_train, y_train)
 
-    # print(
-    #     'Mean as Baseline (RMSPE)',
-    #     rmspe(np.full_like(y_train, np.mean(
-    #         y_train)), y_train.to_numpy())
-    # )
+    print(
+        'Mean as Baseline (RMSPE)',
+        rmspe(np.full_like(y_train, np.mean(
+            y_train)), y_train.to_numpy())
+    )
 
-    # for metric in training_metrics:
-    #     print('')
-    #     for key, values in metric.items():
-    #         print(key, values)
+    for metric in training_metrics:
+        print('')
+        for key, values in metric.items():
+            print(key, values)
 
     print('')
     print('Validation performance:')
