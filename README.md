@@ -280,7 +280,11 @@ __i = single_run(pipes, X_train_clean, y_train_clean,
     rmspe 21.41
 
 # Analysis of the model
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> add presentation content to readme
 
 
 ```python
@@ -335,10 +339,17 @@ finally:
 
 ```python
 def merge_data(train, store):
+<<<<<<< HEAD
 
     """ Takes two dataframes, creates two copies drop the
     customers axis drop the nan for sale and stores make sure
     the store columns are of the same type. inner merge on the column store.
+=======
+
+    """ Takes two dataframes, creates two copies drop the
+    customers axis drop the nan for sale and stores make sure
+    the store columns are of the same type. inner merge on the column store.
+>>>>>>> add presentation content to readme
     """
     train_copy = train.copy()
     store_copy = store.copy()
@@ -349,7 +360,11 @@ def merge_data(train, store):
     df_p = pd.merge(train_copy, store_copy, how = 'inner', on = 'Store')
 
     return df_p
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> add presentation content to readme
 df_p = merge_data(df_train, df_store)
 
 dropped_columns_n = ['CompetitionOpenSinceMonth', 'CompetitionOpenSinceYear',\
@@ -359,7 +374,11 @@ df_p1 = df_p.drop(columns = dropped_columns_n)
 # Estimate day-month-year etc
 
 df_unclean = df_p1.copy()
+<<<<<<< HEAD
 df_unclean['Date'] = pd.to_datetime(df_unclean['Date'])
+=======
+df_unclean['Date'] = pd.to_datetime(df_unclean['Date'])
+>>>>>>> add presentation content to readme
 df_unclean['day'] = df_unclean['Date'].dt.day
 df_unclean['month'] = df_unclean['Date'].dt.month
 df_unclean['year'] = df_unclean['Date'].dt.year
@@ -453,18 +472,32 @@ X_train, y_train, X_val, y_val, training_metrics, validation_metrics = \
                                   tree_method=None, validate_parameters=None,
                                   verbosity=None))])...
     ...done.
+<<<<<<< HEAD
 
     Training performance:
     Mean as Baseline (RMSPE) 61.66152750493536
 
+=======
+
+    Training performance:
+    Mean as Baseline (RMSPE) 61.66152750493536
+
+>>>>>>> add presentation content to readme
     model <class 'xgboost.sklearn.XGBRegressor'>
     feat_importance [('year', 0.01), ('weekday', 0.04), ('type_std', 0.0), ('type_median', 0.04), ('std_sales', 0.07), ('month', 0.03), ('median_sales', 0.47), ('day', 0.03), ('StateHoliday_no', 0.01), ('StateHoliday_nan', 0.0), ('StateHoliday_c', 0.0), ('StateHoliday_b', 0.0), ('SchoolHoliday_nan', 0.0), ('SchoolHoliday_1.0', 0.01), ('Promo2', 0.01), ('Promo', 0.28), ('CompetitionDistance', 0.01), ('Assortment_nan', 0.0), ('Assortment_c', 0.01), ('Assortment_b', 0.0)]
     rmspe 21.05
     prediction [4741.573  4467.9663 5004.8315 ... 8796.024  7589.8477 8719.509 ]
+<<<<<<< HEAD
 
     Validation performance:
     Mean as Baseline (RMSPE) 62.24180029835583
 
+=======
+
+    Validation performance:
+    Mean as Baseline (RMSPE) 62.24180029835583
+
+>>>>>>> add presentation content to readme
     model <class 'xgboost.sklearn.XGBRegressor'>
     rmspe 21.41
 
@@ -473,7 +506,11 @@ X_train, y_train, X_val, y_val, training_metrics, validation_metrics = \
 
 
 ```python
+<<<<<<< HEAD
 # TODO: adjust cleaning so that we can run cleaning of train
+=======
+# TODO: adjust cleaning so that we can run cleaning of train
+>>>>>>> add presentation content to readme
 # data even if I don't drop "Store". Now we get an error so commented these lines
 
 # Run cleaning again but now keep some features that were previously OHE or dropped
@@ -590,7 +627,11 @@ def groupstore(df, storetype:str):
                     .groupby(["Store"])["Sales", "CompetitionDistance"]\
                     .mean())\
                     .assign(StoreType=storetype)
+<<<<<<< HEAD
     return df
+=======
+    return df
+>>>>>>> add presentation content to readme
 
 unique_storetypes = df_unclean["StoreType"].unique()
 
@@ -618,9 +659,15 @@ Image(px.histogram(
 
 
 
+<<<<<<< HEAD
 
 ![png](analysis_files/analysis_11_1.png)
 
+=======
+
+![png](analysis_files/analysis_11_1.png)
+
+>>>>>>> add presentation content to readme
 
 
 
@@ -642,9 +689,15 @@ Image(px.box(
 
 
 
+<<<<<<< HEAD
 
 ![png](analysis_files/analysis_12_0.png)
 
+=======
+
+![png](analysis_files/analysis_12_0.png)
+
+>>>>>>> add presentation content to readme
 
 
 
@@ -670,9 +723,15 @@ Image(px.box(
 
 
 
+<<<<<<< HEAD
 
 ![png](analysis_files/analysis_13_0.png)
 
+=======
+
+![png](analysis_files/analysis_13_0.png)
+
+>>>>>>> add presentation content to readme
 
 
 
@@ -695,9 +754,15 @@ Image(px.box(
 
 
 
+<<<<<<< HEAD
 
 ![png](analysis_files/analysis_14_0.png)
 
+=======
+
+![png](analysis_files/analysis_14_0.png)
+
+>>>>>>> add presentation content to readme
 
 
 
@@ -717,7 +782,11 @@ def df_feat_imp_model(iModel, metrics):
     df_feat_imp["Importance"] = [feat[1] for feat in feat_importance]
     df_feat_imp.sort_values("Importance", ascending=False, inplace=True)
     df_feat_imp["Model"] = validation_metrics[iModel]["model"].__name__
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> add presentation content to readme
     return df_feat_imp
 
 df_feat_imp_vstack = pd.concat([df_feat_imp_model(iModel, validation_metrics)\
@@ -732,7 +801,11 @@ fig3 = px.bar(
     height=900,
     orientation="h",
     title= "Feature Importances",
+<<<<<<< HEAD
     #animation_frame="Model",
+=======
+    #animation_frame="Model",
+>>>>>>> add presentation content to readme
 )
 
 fig3.update_layout(yaxis={'categoryorder':'total ascending'})
@@ -744,9 +817,15 @@ Image(fig3.to_image(format='png'))
 
 
 
+<<<<<<< HEAD
 
 ![png](analysis_files/analysis_17_0.png)
 
+=======
+
+![png](analysis_files/analysis_17_0.png)
+
+>>>>>>> add presentation content to readme
 
 
 
@@ -772,7 +851,11 @@ weekday = df_date["Date"].dt.weekday
 
 Image(px.scatter(
     df_date,
+<<<<<<< HEAD
     x="Date",
+=======
+    x="Date",
+>>>>>>> add presentation content to readme
     y="Sales",
     color="Y_type",
     hover_data= [weekday],
@@ -784,17 +867,29 @@ Image(px.scatter(
 ```
 
     /tmp/ipykernel_411187/4273959803.py:2: FutureWarning:
+<<<<<<< HEAD
+
+    Indexing with multiple keys (implicitly converted to a tuple of keys) will be deprecated, use a list instead.
+=======
 
     Indexing with multiple keys (implicitly converted to a tuple of keys) will be deprecated, use a list instead.
 
+>>>>>>> add presentation content to readme
 
 
 
 
+
+<<<<<<< HEAD
 
 
 ![png](analysis_files/analysis_18_1.png)
 
+=======
+
+![png](analysis_files/analysis_18_1.png)
+
+>>>>>>> add presentation content to readme
 
 
 
@@ -809,10 +904,17 @@ def groupdate_sales_storetype(df, storetype:str):
                     .groupby(["Date"])["Sales", "Prediction"]\
                     .mean())\
                     .assign(StoreType=storetype)
+<<<<<<< HEAD
     return df_n
 
 # a. For each StoreType : Get dataframe with avgSales and StoreType grouped by Date"""
 # b. Concatenate across rows
+=======
+    return df_n
+
+# a. For each StoreType : Get dataframe with avgSales and StoreType grouped by Date"""
+# b. Concatenate across rows
+>>>>>>> add presentation content to readme
 
 unique_storetypes = df_val_clean["StoreType"].unique()
 
@@ -839,7 +941,11 @@ weekday1 = df_date1["Date"].dt.weekday
 # Time-series of Sales for every Store Type
 Image(px.scatter(
     df_date1,
+<<<<<<< HEAD
     x="Date",
+=======
+    x="Date",
+>>>>>>> add presentation content to readme
     y="Sales",
     color="Y_type",
     facet_row="StoreType",
@@ -851,17 +957,29 @@ Image(px.scatter(
 ```
 
     /tmp/ipykernel_411187/1067536907.py:5: FutureWarning:
+<<<<<<< HEAD
+
+    Indexing with multiple keys (implicitly converted to a tuple of keys) will be deprecated, use a list instead.
+=======
 
     Indexing with multiple keys (implicitly converted to a tuple of keys) will be deprecated, use a list instead.
 
+>>>>>>> add presentation content to readme
 
 
 
 
+
+<<<<<<< HEAD
 
 
 ![png](analysis_files/analysis_19_1.png)
 
+=======
+
+![png](analysis_files/analysis_19_1.png)
+
+>>>>>>> add presentation content to readme
 
 
 
@@ -884,9 +1002,15 @@ Image(px.box(
 
 
 
+<<<<<<< HEAD
 
 ![png](analysis_files/analysis_20_0.png)
 
+=======
+
+![png](analysis_files/analysis_20_0.png)
+
+>>>>>>> add presentation content to readme
 
 
 
@@ -909,9 +1033,15 @@ Image(px.box(
 
 
 
+<<<<<<< HEAD
 
 ![png](analysis_files/analysis_21_0.png)
 
+=======
+
+![png](analysis_files/analysis_21_0.png)
+
+>>>>>>> add presentation content to readme
 
 
 
@@ -933,9 +1063,15 @@ Image(px.box(
 
 
 
+<<<<<<< HEAD
 
 ![png](analysis_files/analysis_22_0.png)
 
+=======
+
+![png](analysis_files/analysis_22_0.png)
+
+>>>>>>> add presentation content to readme
 
 
 
@@ -950,7 +1086,11 @@ def groupstore(df, storetype:str):
                     .groupby(["Store"])["Sales", "abserror", "CompetitionDistance"]\
                     .mean())\
                     .assign(StoreType=storetype)
+<<<<<<< HEAD
     return df_n
+=======
+    return df_n
+>>>>>>> add presentation content to readme
 
 unique_storetypes = df_val_clean["StoreType"].unique()
 
@@ -963,7 +1103,11 @@ df_val_grpstore
 
 Image(px.scatter(
     df_val_grpstore,
+<<<<<<< HEAD
     x="Sales",
+=======
+    x="Sales",
+>>>>>>> add presentation content to readme
     y="abserror",
     color="StoreType",
     trendline="ols",
@@ -976,16 +1120,28 @@ Image(px.scatter(
 ```
 
     /tmp/ipykernel_411187/1948844127.py:5: FutureWarning:
+<<<<<<< HEAD
+
+    Indexing with multiple keys (implicitly converted to a tuple of keys) will be deprecated, use a list instead.
+=======
 
     Indexing with multiple keys (implicitly converted to a tuple of keys) will be deprecated, use a list instead.
 
+>>>>>>> add presentation content to readme
 
 
 
 
+
+<<<<<<< HEAD
 
 
 ![png](analysis_files/analysis_23_1.png)
 
+=======
+
+![png](analysis_files/analysis_23_1.png)
+
+>>>>>>> add presentation content to readme
 
 
